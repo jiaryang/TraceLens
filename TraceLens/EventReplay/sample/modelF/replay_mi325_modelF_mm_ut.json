@@ -1,0 +1,42 @@
+[
+    {
+        "op_name": "aten::mm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            2048,
+                            576
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            576,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            576,
+                            576
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            576,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    }
+]
