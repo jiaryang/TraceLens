@@ -25,6 +25,9 @@ torch._inductor.config.triton.unique_kernel_names = True   # stable Triton kerne
 torch._inductor.config.coordinate_descent_tuning = True    # broader param search for autotune
 torch._inductor.config.freezing = True                     # inference-oriented opts (use under no_grad)
 torch._inductor.config.max_autotune = True                 # enlarge autotune search space
+torch._inductor.config.triton.unique_user_kernel_names = True
+torch._dynamo.config.recompile_limit = 256
+#torch._inductor.config.max_autotune_gemm_search_space = 'EXHAUSTIVE'
 
 
 # -------------------------------
@@ -200,19 +203,29 @@ if __name__ == "__main__":
         "--excel", type=str, default=None,
         help="Path to the Excel file for results (default: ./op_bench_YYYYmmdd_HHMMSS.xlsx)"
     )
+    parser.add_argument("--csv", type=str, default=None, help="Optional: also dump a CSV with the same rows")
+
+    # NEW: control which paths to run
     parser.add_argument(
-        "--csv", type=str, default=None,
-        help="Optional: also dump a CSV with the same rows"
+        "--run",
+        choices=["eager", "compiled", "both"],
+        default="both",
+        help="Which path(s) to run: only eager, only compiled, or both (default: both).",
     )
 
     args = parser.parse_args()
+
+    RUN_EAGER = args.run in ("eager", "both")
+    RUN_COMPILED = args.run in ("compiled", "both")
+
+    print(f"{RUN_EAGER=}, {RUN_COMPILED=}, {args.run=}")
 
     # Device check
     if args.device == "cuda" and not torch.cuda.is_available():
         print("Warning: CUDA requested but not available. Falling back to CPU.")
         args.device = "cpu"
 
-    print(f"Running repro from '{args.repro_file}' on device '{args.device}'")
+    print(f"Running repro from '{args.repro_file}' on device '{args.device}' (run={args.run})")
 
     # Load repro data
     with open(args.repro_file, "r") as f:
@@ -232,7 +245,7 @@ if __name__ == "__main__":
         replay_ir = repro_info["replay_ir"]
         print(f"\n[{replayed_count + 1}/{len(repro_data_list)}] Replaying: {op_name}")
 
-        # Eager path: JIT PyCapsule (works well for direct calls)
+        # Eager path uses JIT PyCapsule (fast direct call)
         try:
             func, _ = torch._C._jit_get_operation(op_name)
         except Exception as e:
@@ -242,12 +255,13 @@ if __name__ == "__main__":
             errors += 1
             continue
 
-        # Compiled path: prefer a Dynamo-traceable torch.ops callable
+        # Compiled path prefers Dynamo-traceable torch.ops callable
         func_for_compile = None
         try:
             func_for_compile = resolve_dynamo_callable(op_name)
         except Exception as e:
-            print(f"  Warning: torch.ops lookup failed for '{op_name}'. Will try PyCapsule with allow_in_graph. Error: {e}")
+            if RUN_COMPILED:
+                print(f"  Warning: torch.ops lookup failed for '{op_name}'. Will try PyCapsule with allow_in_graph. Error: {e}")
 
         # Reconstruct args
         try:
@@ -267,91 +281,122 @@ if __name__ == "__main__":
             errors += 1
             continue
 
-        # Eager thunk + one dry run (not timed)
-        eager_pos_args, eager_kwargs = deep_clone_inputs(pos_args, kwargs)
-        eager_thunk = make_thunk(func, eager_pos_args, eager_kwargs)
-
-        if args.profile:
-            profile_once(tag=f"eager/{op_name}", fn=eager_thunk, steps=30, warmup=5, logdir="prof_logs")
-
+        # -------------------------------------------------
+        # Eager path (optional)
+        # -------------------------------------------------
+        eager_time_us = None
         result = None
-        try:
-            if args.device == "cuda":
-                torch.cuda.synchronize()
-            result = eager_thunk()
-            if args.device == "cuda":
-                torch.cuda.synchronize()
-        except Exception as e:
-            print(f"  Error: Failed to execute '{op_name}' (eager). Error: {e}")
-            if args.stop_on_error:
-                raise
-            errors += 1
-            continue
-
-        # Compiled thunk + warmup
-        compiled_thunk = None
-        try:
-            comp_pos_args, comp_kwargs = deep_clone_inputs(pos_args, kwargs)
-
-            if func_for_compile is not None:
-                # Preferred path: torch.ops.* overload (Dynamo-friendly)
-                compiled_thunk = torch.compile(
-                    make_thunk(func_for_compile, comp_pos_args, comp_kwargs),
-                    backend="inductor",
-                    mode=args.compile_mode,
-                )
-            else:
-                # Fallback: allow_in_graph wrapper around the PyCapsule
-                from torch.compiler import allow_in_graph
-
-                @allow_in_graph
-                def _capsule_call(f, *a, **k):
-                    return f(*a, **k)
-
-                compiled_thunk = torch.compile(
-                    lambda: _capsule_call(func, *comp_pos_args, **comp_kwargs),
-                    backend="inductor",
-                    mode=args.compile_mode,
-                )
-
-            if args.device == "cuda":
-                torch.cuda.synchronize()
-            _ = compiled_thunk()  # trigger compilation once
-            if args.device == "cuda":
-                torch.cuda.synchronize()
+        if RUN_EAGER:
+            eager_pos_args, eager_kwargs = deep_clone_inputs(pos_args, kwargs)
+            eager_thunk = make_thunk(func, eager_pos_args, eager_kwargs)
 
             if args.profile:
-                profile_once(tag=f"compiled/{op_name}", fn=compiled_thunk, steps=30, warmup=5, logdir="prof_logs")
+                profile_once(tag=f"eager/{op_name}", fn=eager_thunk, steps=30, warmup=5, logdir="prof_logs")
 
-        except Exception as e:
-            print(f"  Warning: torch.compile failed for '{op_name}'. Fallback to eager-only. Error: {e}")
-            compiled_thunk = None
+            try:
+                if args.device == "cuda":
+                    torch.cuda.synchronize()
+                result = eager_thunk()
+                if args.device == "cuda":
+                    torch.cuda.synchronize()
+            except Exception as e:
+                print(f"  Error: Failed to execute '{op_name}' (eager). Error: {e}")
+                if args.stop_on_error:
+                    raise
+                errors += 1
+                # If only eager was requested, skip to next
+                if not RUN_COMPILED:
+                    continue
+                # Else still try compiled path
 
-        # Benchmark eager
-        if args.device == "cuda":
-            torch.cuda.synchronize()
-        eager_time_us = benchmark_func(eager_thunk, args.device, warmup=50, avg_steps=100)
-
-        # Benchmark compiled
-        compiled_time_us = None
-        if compiled_thunk is not None:
             if args.device == "cuda":
                 torch.cuda.synchronize()
-            compiled_time_us = benchmark_func(compiled_thunk, args.device, warmup=20, avg_steps=100)
+            eager_time_us = benchmark_func(eager_thunk, args.device, warmup=20, avg_steps=100)
 
-        # Print results
-        print(f"  Eager avg time:    {eager_time_us:.2f} microseconds")
-        if compiled_time_us is not None:
-            print(f"  Compiled avg time: {compiled_time_us:.2f} microseconds")
-            if compiled_time_us > 0:
-                print(f"  Speedup (Eager/Compiled): {eager_time_us/compiled_time_us:.2f}x")
+        # -------------------------------------------------
+        # Compiled path (optional)
+        # -------------------------------------------------
+        compiled_time_us = None
+        compiled_thunk = None
+        if RUN_COMPILED:
+            try:
+                comp_pos_args, comp_kwargs = deep_clone_inputs(pos_args, kwargs)
+
+                # import os, shutil
+                # os.environ.setdefault("TORCHINDUCTOR_CACHE_DIR", "/tmp/torchinductor_root")
+                # cache_dir = os.environ.get("TORCHINDUCTOR_CACHE_DIR", "/tmp/torchinductor_root")
+                # try:
+                #     if os.path.isdir(cache_dir):
+                #         shutil.rmtree(cache_dir, ignore_errors=True)
+                #     os.makedirs(cache_dir, exist_ok=True)
+                # except Exception as e:
+                #     print(f"[warn] failed to clear inductor cache at {cache_dir}: {e}")
+
+                if func_for_compile is not None:
+                    compiled_thunk = torch.compile(
+                        make_thunk(func_for_compile, comp_pos_args, comp_kwargs),
+                        backend="inductor",
+                        mode=args.compile_mode,
+                        dynamic=False,
+                    )
+                else:
+                    from torch.compiler import allow_in_graph
+
+                    @allow_in_graph
+                    def _capsule_call(f, *a, **k):
+                        return f(*a, **k)
+
+                    compiled_thunk = torch.compile(
+                        lambda: _capsule_call(func, *comp_pos_args, **comp_kwargs),
+                        backend="inductor",
+                        mode=args.compile_mode,
+                        dynamic=False,
+                    )
+
+                if args.device == "cuda":
+                    torch.cuda.synchronize()
+                _ = compiled_thunk()  # trigger compilation once
+                if args.device == "cuda":
+                    torch.cuda.synchronize()
+
+                if args.profile:
+                    profile_once(tag=f"compiled/{op_name}", fn=compiled_thunk, steps=30, warmup=5, logdir="prof_logs")
+
+                if args.device == "cuda":
+                    torch.cuda.synchronize()
+                compiled_time_us = benchmark_func(compiled_thunk, args.device, warmup=20, avg_steps=100)
+
+            except Exception as e:
+                print(f"  Warning: torch.compile failed for '{op_name}'. Fallback to eager-only. Error: {e}")
+                compiled_thunk = None
+
+        # -------------------------------------------------
+        # Print results (respect --run)
+        # -------------------------------------------------
+        if RUN_EAGER:
+            print(f"  Eager avg time:    {eager_time_us:.2f} microseconds" if eager_time_us is not None else
+                  "  Eager avg time:    N/A")
+        if RUN_COMPILED:
+            print(f"  Compiled avg time: {compiled_time_us:.2f} microseconds" if compiled_time_us is not None else
+                  "  Compiled avg time: N/A")
+
+        if RUN_EAGER and RUN_COMPILED and (eager_time_us is not None) and (compiled_time_us is not None) and compiled_time_us > 0:
+            print(f"  Speedup (Eager/Compiled): {eager_time_us/compiled_time_us:.2f}x")
+
+        # Choose mean_time_us for workload estimate:
+        # - If both: prefer compiled if available, else eager
+        # - If only one path: use that path's time
+        if RUN_EAGER and RUN_COMPILED:
+            mean_time_us = compiled_time_us if (compiled_time_us is not None) else eager_time_us
+        elif RUN_COMPILED:
+            mean_time_us = compiled_time_us
         else:
-            print("  Compiled avg time: N/A (compile failed)")
+            mean_time_us = eager_time_us
 
-        # Workload estimate (prefer compiled if available)
-        mean_time_us = compiled_time_us if compiled_thunk is not None else eager_time_us
-        print(f"  Average time taken: {mean_time_us:.2f} microseconds")
-        if "count" in repro_info:
+        print(f"  Average time taken: {mean_time_us:.2f} microseconds" if mean_time_us is not None else
+              "  Average time taken: N/A")
+
+        if "count" in repro_info and mean_time_us is not None:
             count_workload = repro_info["count"]
             total_time_us = mean_time_us * count_workload
             print(f"  Count in workload: {count_workload}")
@@ -382,23 +427,27 @@ if __name__ == "__main__":
             if t2_shape[1] == K:
                 N = t2_shape[2]
 
-        # Accumulate a row for Excel/CSV
+        # Only compute speedup when both paths ran and have data
+        speedup = (
+            float(eager_time_us) / float(compiled_time_us)
+            if (RUN_EAGER and RUN_COMPILED and
+                eager_time_us is not None and compiled_time_us is not None and compiled_time_us > 0)
+            else None
+        )
+
         rows.append({
             "op_name": op_name,
             "device": args.device,
             "eager_us": float(eager_time_us) if eager_time_us is not None else None,
             "compiled_us": float(compiled_time_us) if compiled_time_us is not None else None,
-            "speedup_eager_over_compiled": (
-                float(eager_time_us) / float(compiled_time_us)
-                if (compiled_time_us is not None and compiled_time_us > 0) else None
-            ),
+            "speedup_eager_over_compiled": speedup,
             "used_us_for_est": float(mean_time_us) if mean_time_us is not None else None,
             "count_in_workload": int(repro_info.get("count", 0)) if "count" in repro_info else None,
             "est_total_us": (
                 float(mean_time_us) * int(repro_info.get("count", 0))
                 if ("count" in repro_info and mean_time_us is not None) else None
             ),
-            "compile_ok": bool(compiled_thunk is not None),
+            "compile_ok": bool(compiled_thunk is not None) if RUN_COMPILED else None,
             "unique_kernel_names": bool(getattr(torch._inductor.config.triton, "unique_kernel_names", False)),
             "coordinate_descent_tuning": bool(getattr(torch._inductor.config, "coordinate_descent_tuning", False)),
             "freezing": bool(getattr(torch._inductor.config, "freezing", False)),
@@ -435,7 +484,7 @@ if __name__ == "__main__":
         })
 
         # Verbose result preview
-        if args.verbose:
+        if args.verbose and RUN_EAGER and result is not None:
             print(f"  Successfully executed {op_name}.")
             if isinstance(result, torch.Tensor):
                 print(f"  Result: Tensor(shape={tuple(result.shape)}, dtype={result.dtype}, device={result.device})")
@@ -505,8 +554,8 @@ if __name__ == "__main__":
             width = max(12, min(40, maxlen))
             ws.set_column(col_idx, col_idx, width)
 
-        # format speedup with 2 decimals + color scale
-        if "speedup_eager_over_compiled" in df.columns:
+        # format speedup only if present (only in --run both)
+        if "speedup_eager_over_compiled" in df.columns and df["speedup_eager_over_compiled"].notna().any():
             fmt = wb.add_format({"num_format": "0.00"})
             c = df.columns.get_loc("speedup_eager_over_compiled")
             ws.set_column(c, c, 14, fmt)
