@@ -1,0 +1,618 @@
+[
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            136,
+                            3,
+                            3
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9,
+                            3,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            136,
+                            3,
+                            2304
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            6912,
+                            2304,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            192,
+                            384
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            73728,
+                            1,
+                            192
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            384,
+                            384
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            147456,
+                            384,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            136,
+                            3,
+                            3
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9,
+                            3,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            136,
+                            3,
+                            1152
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            3456,
+                            1152,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            384,
+                            192
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            73728,
+                            192,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            192,
+                            384
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            0,
+                            1,
+                            192
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            384,
+                            192
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            73728,
+                            192,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            192,
+                            384
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            73728,
+                            1,
+                            192
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            192,
+                            384
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            73728,
+                            1,
+                            192
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            384,
+                            384
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            147456,
+                            1,
+                            384
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            384,
+                            384
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            147456,
+                            384,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            8,
+                            384,
+                            192
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            0,
+                            192,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9216,
+                            1,
+                            96
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9216,
+                            96,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            21,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            2016,
+                            1,
+                            21
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9216,
+                            96,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9216,
+                            96,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9216,
+                            96,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9216,
+                            96,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9216,
+                            1,
+                            96
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            21
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            2016,
+                            21,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            21,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            2016,
+                            96,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            21,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            2016,
+                            96,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9216,
+                            1,
+                            96
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    },
+    {
+        "op_name": "aten::bmm",
+        "replay_ir": {
+            "list_pos_args": [
+                {
+                    "arg_name": "self",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            96
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            9216,
+                            96,
+                            1
+                        ],
+                        "init": "normal"
+                    }
+                },
+                {
+                    "arg_name": "mat2",
+                    "arg_type": "Tensor",
+                    "value": {
+                        "shape": [
+                            16,
+                            96,
+                            21
+                        ],
+                        "dtype": "c10::BFloat16",
+                        "strides": [
+                            2016,
+                            1,
+                            96
+                        ],
+                        "init": "normal"
+                    }
+                }
+            ],
+            "list_kwargs": []
+        }
+    }
+]

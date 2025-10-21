@@ -7,13 +7,13 @@ from TraceLens import EventReplayer
 import json
 # read sheet from excel
 
-EXCEL_PATH='2025-08-15-modelF-prod-MI325.xlsx'
+EXCEL_PATH='2025-10-09-modelF-MI325-1n-ddp-deter-logs2.xlsx'
 EXCEL_PAGE='ops_unique_args'
 COLLUMN_TO_SORT='total_direct_kernel_time_mean'
 COLLUMN_TO_COUNT='operation_count'
-OPERATION_LIST=['aten::addmm']
-#OPERATION_LIST=['aten::mm','aten::bmm','aten::addmm']
-OUT_PATH='replay_mi325_modelF_addmm.json'
+#OPERATION_LIST=['aten::mm']
+OPERATION_LIST=['aten::mm','aten::bmm','aten::addmm']
+OUT_PATH='replay_mi325_modelF_1009.json'
 
 df_unique_ops = pd.read_excel(EXCEL_PATH, sheet_name=EXCEL_PAGE)
 
